@@ -30,17 +30,16 @@ public class MessageController {
         String sender = messageDTO.getSender();
         String receiver = messageDTO.getReceiver();
 
-        // Verificar se o remetente existe
         if (!senderExists(sender)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Remetente não encontrado!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sender not found!");
         }
 
-        // Verificar se o destinatário existe
         if (!receiverExists(receiver)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Destinatário não encontrado!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Receiver not found!");
         }
 
-        // Lógica para validar os dados e processar o envio da mensagem
+        Message message = new Message(content, sender, receiver);
+        messageRepository.save(message);
 
         // Enviar a mensagem para o Kafka
         kafkaTemplate.send("messages-topic", content);
@@ -49,8 +48,7 @@ public class MessageController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Message> getMessage(@PathVariable String id, MessageDTO messageDTO) {
-        // Buscar a mensagem pelo ID no repositório
+    public ResponseEntity<Message> getMessageById(@PathVariable("id") String id, MessageDTO messageDTO) {
         Optional<Message> optionalMessage = messageRepository.findById(messageDTO.getIdMessage());
         if (optionalMessage.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -61,50 +59,39 @@ public class MessageController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMessage(@PathVariable("id") String id, @RequestBody MessageDTO messageDTO) {
-        // Buscar a mensagem pelo ID no repositório
-        Message message = messageRepository.findById(messageDTO.getIdMessage()).orElse(null));
-        if (message.isEmpty()) {
+
+        Message message = messageRepository.findById(messageDTO.getIdMessage()).orElse(null);
+        if (message == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // Atualizar os campos da mensagem com base nos dados fornecidos
-        Message existingMessage = optionalExistingMessage.get();
+        Message existingMessage = message;
         existingMessage.setContent(messageDTO.getContent());
         existingMessage.setSender(messageDTO.getSender());
         existingMessage.setReceiver(messageDTO.getReceiver());
 
-        // Salvar a mensagem atualizada no repositório
+
         Message updatedMessage = messageRepository.save(existingMessage);
 
         return ResponseEntity.ok(updatedMessage);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMessage(@PathVariable String id) {
-        // Verificar se a mensagem existe antes de excluí-la
+    public ResponseEntity<String> deleteMessage(@PathVariable("id") String id) {
         if (!messageRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // Excluir a mensagem pelo ID
         messageRepository.deleteById(id);
 
-        return ResponseEntity.ok("Mensagem excluída com sucesso!");
+        return ResponseEntity.ok("Message Deleted!");
     }
 
     private boolean senderExists(String sender) {
-        // Implemente a lógica para verificar se o remetente existe no seu sistema
-        // Retorne true se o remetente existir e false caso contrário
-        // Exemplo:
-        // return userService.userExists(sender);
-        return true;
+        return messageRepository.existsBySender(sender);
     }
 
     private boolean receiverExists(String receiver) {
-        // Implemente a lógica para verificar se o destinatário existe no seu sistema
-        // Retorne true se o destinatário existir e false caso contrário
-        // Exemplo:
-        // return userService.userExists(receiver);
-        return true;
+        return messageRepository.existsByReceiver(receiver);
     }
 }

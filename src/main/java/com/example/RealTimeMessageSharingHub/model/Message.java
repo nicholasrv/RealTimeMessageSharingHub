@@ -12,6 +12,7 @@ public class Message {
 
     @Id
     private String id;
+
     private String content;
     private String sender;
     private String receiver;
