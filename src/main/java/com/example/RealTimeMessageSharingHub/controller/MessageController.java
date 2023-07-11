@@ -1,3 +1,5 @@
+package com.example.RealTimeMessageSharingHub.controller;
+
 import com.example.RealTimeMessageSharingHub.dto.MessageDTO;
 import com.example.RealTimeMessageSharingHub.model.Message;
 import com.example.RealTimeMessageSharingHub.repository.MessageRepository;
@@ -7,13 +9,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/messages")
+@RequestMapping("/api/messages")
 public class MessageController {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MessageRepository messageRepository;
@@ -24,30 +27,35 @@ public class MessageController {
         this.messageRepository = messageRepository;
     }
 
-    @PostMapping
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('USER')")
+    public ResponseEntity<?> getAllMessages() {
+        List<Message> messages = messageRepository.findAll();
+        if (messages.size() > 0){
+            return new ResponseEntity<List<Message>>(messages, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("There are no messages.", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/send")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> sendMessage(@RequestBody MessageDTO messageDTO) {
+
         String content = messageDTO.getContent();
         String sender = messageDTO.getSender();
         String receiver = messageDTO.getReceiver();
 
-        if (!senderExists(sender)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sender not found!");
-        }
-
-        if (!receiverExists(receiver)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Receiver not found!");
-        }
-
         Message message = new Message(content, sender, receiver);
         messageRepository.save(message);
 
-        // Enviar a mensagem para o Kafka
         kafkaTemplate.send("messages-topic", content);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("Mensagem enviada com sucesso!");
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Message> getMessageById(@PathVariable("id") String id, MessageDTO messageDTO) {
         Optional<Message> optionalMessage = messageRepository.findById(messageDTO.getIdMessage());
         if (optionalMessage.isEmpty()) {
@@ -58,6 +66,7 @@ public class MessageController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<?> updateMessage(@PathVariable("id") String id, @RequestBody MessageDTO messageDTO) {
 
         Message message = messageRepository.findById(messageDTO.getIdMessage()).orElse(null);
@@ -77,6 +86,7 @@ public class MessageController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> deleteMessage(@PathVariable("id") String id) {
         if (!messageRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
