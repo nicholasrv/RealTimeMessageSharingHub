@@ -47,7 +47,7 @@ public class MessageController {
         Message message = new Message(content, sender, receiver);
         messageRepository.save(message);
 
-        kafkaTemplate.send("messages-topic", content);
+        kafkaTemplate.send("messagehub", content);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("Mensagem enviada com sucesso!");
     }

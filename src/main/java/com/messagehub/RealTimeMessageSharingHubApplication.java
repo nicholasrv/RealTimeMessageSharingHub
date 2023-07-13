@@ -16,7 +16,9 @@ public class RealTimeMessageSharingHubApplication {
 	@Bean
 	CommandLineRunner commandLineRunner(KafkaTemplate<String, String> kafkaTemplate) {
 		return args -> {
-			kafkaTemplate.send("messagehub", "hello world");
+			for (int i = 0; i < 100; i++) {
+				kafkaTemplate.send("messagehub", "hello world :) " + i);
+			}
 		};
 	}
 }

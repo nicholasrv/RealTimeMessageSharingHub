@@ -9,7 +9,7 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaTopicConfig {
     @Bean
     public NewTopic messageHubTopic() {
-        return TopicBuilder.name("messagehubapp")
+        return TopicBuilder.name("messagehub")
                 .build();
     }
 }
