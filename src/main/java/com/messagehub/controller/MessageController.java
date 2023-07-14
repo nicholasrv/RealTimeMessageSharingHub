@@ -2,7 +2,9 @@ package com.messagehub.controller;
 
 import com.messagehub.dto.MessageDTO;
 import com.messagehub.model.Message;
+import com.messagehub.model.UserEntity;
 import com.messagehub.repository.MessageRepository;
+import com.messagehub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +21,13 @@ public class MessageController {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MessageRepository messageRepository;
 
+    private final UserRepository userRepository;
+
     @Autowired
-    public MessageController(KafkaTemplate<String, String> kafkaTemplate, MessageRepository messageRepository) {
+    public MessageController(KafkaTemplate<String, String> kafkaTemplate, MessageRepository messageRepository, UserRepository userRepository) {
         this.kafkaTemplate = kafkaTemplate;
         this.messageRepository = messageRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/all")
@@ -40,16 +45,18 @@ public class MessageController {
     @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<String> sendMessage(@RequestBody MessageDTO messageDTO) {
 
+        UserEntity userEntity = userRepository.findById(messageDTO.getIdUser()).orElse(null);
+
         String content = messageDTO.getContent();
         String sender = messageDTO.getSender();
         String receiver = messageDTO.getReceiver();
 
-        Message message = new Message(content, sender, receiver);
+        Message message = new Message(content, sender, receiver, userEntity);
         messageRepository.save(message);
 
         kafkaTemplate.send("messagehub", content);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Mensagem enviada com sucesso!");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Message successfully sent!");
     }
 
     @GetMapping("/{id}")

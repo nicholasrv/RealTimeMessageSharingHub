@@ -11,6 +11,6 @@ public class KafkaListeners {
             groupId = "groupId"
     )
     void listener(String data) {
-        System.out.println("Listener received: " + data + "=DD");
+        System.out.println("Listener received: '" + data + "' - successfully!");
     }
 }

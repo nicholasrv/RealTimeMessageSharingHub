@@ -11,4 +11,5 @@ public class MessageDTO {
     public String sender;
     public String receiver;
     public String idMessage;
+    public String idUser;
 }

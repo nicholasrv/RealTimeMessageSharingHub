@@ -5,9 +5,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@NoArgsConstructor
+@Getter
+@Setter
+
 @Data
 @Document
-@NoArgsConstructor
 public class Message {
 
     @Id
@@ -20,10 +23,11 @@ public class Message {
     @DBRef
     private UserEntity userEntity;
 
-    public Message(String content, String sender, String receiver) {
+    public Message(String content, String sender, String receiver, UserEntity userEntity) {
         this.content = content;
         this.sender = sender;
         this.receiver = receiver;
+        this.userEntity = userEntity;
     }
 
 }

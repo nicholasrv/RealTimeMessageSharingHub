@@ -39,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .antMatchers("/api/auth/login", "/api/auth/register", "/api/auth/roles").permitAll()
                 .antMatchers("/api/messages/send", "/api/messages/{id}", "/api/messages/all").hasAuthority("USER")
                 .anyRequest().authenticated()
                 .and()
